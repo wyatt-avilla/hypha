@@ -4,7 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
   outputs =
@@ -12,27 +11,89 @@
       self,
       nixpkgs,
       flake-utils,
-      rust-overlay,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        overlays = [ (import rust-overlay) ];
-        pkgs = import nixpkgs { inherit system overlays; };
+        pkgs = import nixpkgs { inherit system; };
+        rustVersion = "1.86.0.0";
+        toolchainVersion = "1.86.0.0";
 
-        rustToolchain = pkgs.rust-bin.stable.latest.default.override {
-          targets = [ ];
-          extensions = [ "clippy" ];
+        espRustSource = pkgs.stdenv.mkDerivation {
+          name = "esp-rust-source";
+
+          src = pkgs.fetchurl {
+            url = "https://github.com/esp-rs/rust-build/releases/download/v${rustVersion}/rust-src-${rustVersion}.tar.xz";
+            sha256 = "sha256-EPoxNiYUk6XZfU886bmLruXMWCiXEf5vJCSY/09lspo=";
+          };
+
+          buildInputs = [ ];
+
+          unpackPhase = ''
+            mkdir -p $out
+            tar -xf $src -C $out --strip-components=1
+          '';
+
+          patchPhase = ''
+            patchShebangs $out/install.sh
+          '';
+
+          outputs = [ "out" ];
+
+          installPhase = ''
+            $out/install.sh --destdir=$out --prefix="" --disable-ldconfig
+            runHook postInstall
+          '';
         };
 
-        nativeBuildInputs = with pkgs; [ rustToolchain ];
+        espRustToolchain = pkgs.stdenv.mkDerivation {
+          name = "esp-rust-toolchain";
 
-        buildInputs = with pkgs; [ ];
+          src = pkgs.fetchurl {
+            url = "https://github.com/esp-rs/rust-build/releases/download/v${toolchainVersion}/rust-${toolchainVersion}-x86_64-unknown-linux-gnu.tar.xz";
+            sha256 = "sha256-CqqIgIvYfI10aXTRpS3TnyaMCpsRtdCaMnW3r+qN1V0=";
+          };
+
+          buildInputs = with pkgs; [
+            espRustSource
+            libgcc
+            libz
+            libcxx
+            autoPatchelfHook
+          ];
+
+          unpackPhase = ''
+            mkdir -p $out
+            tar -xf $src -C $out --strip-components=1
+          '';
+
+          patchPhase = ''
+            patchShebangs $out/install.sh
+          '';
+
+          installPhase = ''
+            chmod +x $out/install.sh
+            sh $out/install.sh --destdir=$out --prefix="" --disable-ldconfig
+            cp -rf ${espRustSource}/rust-src/lib/rustlib/* $out/lib/rustlib/
+            runHook postInstall
+          '';
+        };
       in
       {
         devShells.default = pkgs.mkShell {
-          inherit nativeBuildInputs buildInputs;
-          packages = with pkgs; [ ];
+          nativeBuildInputs = with pkgs; [
+            espRustToolchain
+            pkg-config
+            cmake
+            ninja
+            python3
+          ];
+
+          buildInputs = with pkgs; [ openssl ];
+
+          shellHook = ''
+            echo "Pre-built Rust toolchain with ESP32 support is ready!"
+          '';
         };
       }
     );
