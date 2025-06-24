@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    esp-dev.url = "github:mirrexagon/nixpkgs-esp-dev";
   };
 
   outputs =
@@ -11,11 +12,13 @@
       self,
       nixpkgs,
       flake-utils,
+      esp-dev,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = import nixpkgs { inherit system; };
+
         rustVersion = "1.86.0.0";
         toolchainVersion = "1.86.0.0";
 
@@ -83,16 +86,22 @@
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             espRustToolchain
+            esp-dev.packages.${system}.esp-idf-esp32
             pkg-config
             cmake
             ninja
             python3
+            ldproxy
           ];
 
-          buildInputs = with pkgs; [ openssl ];
+          buildInputs = with pkgs; [
+            (rustPlatform.bindgenHook.override { inherit (pkgs.llvmPackages_20) clang; })
+            openssl
+            glibc_multi.dev
+          ];
 
           shellHook = ''
-            echo "Pre-built Rust toolchain with ESP32 support is ready!"
+            BINDGEN_EXTRA_CLANG_ARGS="$BINDGEN_EXTRA_CLANG_ARGS -include ${pkgs.glibc_multi.dev}/include/features.h"
           '';
         };
       }
