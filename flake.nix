@@ -103,6 +103,7 @@
           ];
 
           shellHook = ''
+            export PATH="${espRustToolchain}/bin:$PATH"
             BINDGEN_EXTRA_CLANG_ARGS="$BINDGEN_EXTRA_CLANG_ARGS -include ${pkgs.glibc_multi.dev}/include/features.h"
           '';
         };
