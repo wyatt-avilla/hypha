@@ -86,6 +86,8 @@
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             espRustToolchain
+            espflash
+
             esp-dev.packages.${system}.esp-idf-esp32
             pkg-config
             cmake
