@@ -8,4 +8,11 @@ name = "hypha-server"
 path = "src/main.rs"
 
 [dependencies]
+api = { path = "../api" }
+actix-web = "4.11.0"
 clap = { version = "4.5.40", features = ["derive"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+itertools = "0.14.0"

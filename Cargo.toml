@@ -1,5 +1,5 @@
 [workspace]
-members = ["client", "server"]
+members = [ "api","client", "server"]
 resolver = "2"
 
 [profile.dev.package.client]
