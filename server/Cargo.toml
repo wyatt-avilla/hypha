@@ -8,3 +8,4 @@ name = "hypha-server"
 path = "src/main.rs"
 
 [dependencies]
+clap = { version = "4.5.40", features = ["derive"] }
