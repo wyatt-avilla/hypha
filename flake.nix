@@ -5,6 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     esp-dev.url = "github:mirrexagon/nixpkgs-esp-dev";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
   outputs =
@@ -13,11 +14,13 @@
       nixpkgs,
       flake-utils,
       esp-dev,
+      rust-overlay,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        overlays = [ (import rust-overlay) ];
+        pkgs = import nixpkgs { inherit system overlays; };
 
         rustVersion = "1.86.0.0";
         toolchainVersion = "1.86.0.0";
@@ -83,7 +86,14 @@
         };
       in
       {
-        devShells.default = pkgs.mkShell {
+        devShells.server = pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [
+            (rust-bin.stable.latest.default.override { extensions = [ "clippy" ]; })
+            rust-analyzer
+          ];
+        };
+
+        devShells.client = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             espRustToolchain
             espflash
