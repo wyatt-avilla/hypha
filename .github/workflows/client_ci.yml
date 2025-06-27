@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: Client Continuous Integration
 
 on:
   push:
@@ -26,7 +26,9 @@ jobs:
           - command: fmt
             args: --all -- --check --color always
           - command: clippy
-            args: --all-targets --all-features --workspace -- -D warnings
+            args:
+              --all-targets --all-features --workspace -- -W clippy::pedantic -D
+              warnings
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,5 +40,8 @@ jobs:
           ldproxy: true
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
+        with:
+          working-directory: client
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
+        working-directory: client
