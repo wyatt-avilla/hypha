@@ -23,13 +23,13 @@ jobs:
       matrix:
         action:
           - command: build
-            args: --release
+            args: --project client --release
           - command: fmt
             args: --all -- --check --color always
           - command: clippy
             args:
-              --all-targets --all-features --workspace -- -W clippy::pedantic -D
-              warnings
+              --project client --all-targets --all-features -- -W
+              clippy::pedantic -D warnings
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,8 +41,5 @@ jobs:
           ldproxy: true
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
-        with:
-          working-directory: client
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
-        working-directory: client
