@@ -88,9 +88,18 @@
       {
         devShells.server = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
-            (rust-bin.stable.latest.default.override { extensions = [ "clippy" ]; })
+            (rust-bin.stable.latest.default.override {
+              extensions = [
+                "clippy"
+                "rust-src"
+              ];
+            })
             rust-analyzer
           ];
+
+          shellHook = ''
+            export CARGO_BUILD_TARGET="x86_64-unknown-linux-gnu"
+          '';
         };
 
         devShells.client = pkgs.mkShell {
@@ -113,6 +122,7 @@
           ];
 
           shellHook = ''
+            export CARGO_BUILD_TARGET="xtensa-esp32-espidf"
             export PATH="${espRustToolchain}/bin:$PATH"
             BINDGEN_EXTRA_CLANG_ARGS="$BINDGEN_EXTRA_CLANG_ARGS -include ${pkgs.glibc_multi.dev}/include/features.h"
           '';
