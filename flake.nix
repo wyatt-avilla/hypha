@@ -87,6 +87,7 @@
       in
       {
         devShells.server = pkgs.mkShell {
+          name = "server";
           nativeBuildInputs = with pkgs; [
             (rust-bin.stable.latest.default.override {
               extensions = [
@@ -103,6 +104,7 @@
         };
 
         devShells.client = pkgs.mkShell {
+          name = "client";
           nativeBuildInputs = with pkgs; [
             espRustToolchain
             espflash
