@@ -23,12 +23,12 @@ jobs:
       matrix:
         action:
           - command: build
-            args: --project client --release
+            args: --package client --release
           - command: fmt
             args: --all -- --check --color always
           - command: clippy
             args:
-              --project client --all-targets --all-features -- -W
+              --package client --all-targets --all-features -- -W
               clippy::pedantic -D warnings
     steps:
       - name: Checkout repository
