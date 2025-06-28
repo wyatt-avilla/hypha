@@ -16,6 +16,9 @@ pub enum ServiceMonitorError {
     #[error("Couldn't parse '{0}' into a state enum")]
     StateParseError(String),
 
+    #[error("Service unit list didn't contain [{0}]")]
+    ServiceResponseCountMismatch(String),
+
     #[error("D-Bus error ({0})")]
     ZbusError(#[from] zbus::Error),
 }
@@ -95,7 +98,7 @@ impl<'a> ServiceMonitorInterface<'a> {
     }
 
     pub async fn get_service_statuses(&self) -> Result<api::ServiceStatuses, ServiceMonitorError> {
-        Ok(api::ServiceStatuses {
+        let statuses = api::ServiceStatuses {
             map: self
                 .manager
                 .list_units_by_names(self.monitored_services.clone())
@@ -115,6 +118,17 @@ impl<'a> ServiceMonitorInterface<'a> {
                     ))
                 })
                 .collect::<Result<_, _>>()?,
-        })
+        };
+
+        if statuses.map.len() != self.monitored_services.len() {
+            return Err(ServiceMonitorError::ServiceResponseCountMismatch(
+                self.monitored_services()
+                    .collect::<BTreeSet<_>>()
+                    .difference(&statuses.map.keys().collect())
+                    .join(", "),
+            ));
+        }
+
+        Ok(statuses)
     }
 }
