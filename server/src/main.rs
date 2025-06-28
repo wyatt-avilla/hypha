@@ -32,7 +32,10 @@ async fn root_endpoint(
 ) -> impl Responder {
     match data.lock().await.get_service_statuses().await {
         Ok(s) => HttpResponse::Ok().json(s),
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error: {e}")),
+        Err(e) => {
+            tracing::error!("{e}");
+            HttpResponse::InternalServerError().body(format!("Error: {e}"))
+        }
     }
 }
 
