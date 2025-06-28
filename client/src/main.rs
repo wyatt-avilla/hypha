@@ -1,6 +1,7 @@
 use embassy_executor::Spawner;
-use embassy_time::Timer;
 use esp_idf_hal::{gpio::PinDriver, peripherals::Peripherals};
+
+mod blink;
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
@@ -10,13 +11,12 @@ async fn main(spawner: Spawner) {
     esp_idf_svc::log::EspLogger::initialize_default();
 
     let peripherals = Peripherals::take().unwrap();
-    let mut led = PinDriver::output(peripherals.pins.gpio2).unwrap();
+
+    let mut led = PinDriver::output(peripherals.pins.gpio5).unwrap();
 
     log::info!("entering loop...");
     loop {
-        Timer::after_secs(1).await;
-        let _ = led.set_low();
-        Timer::after_secs(1).await;
-        let _ = led.set_high();
+        let _ = blink::alternating_sec(&mut led).await;
+        let _ = blink::solid_then_pulse_n(&mut led, 5).await;
     }
 }
