@@ -3,8 +3,6 @@ use api::ServiceStatuses;
 use clap::Parser;
 use itertools::Itertools;
 
-use anyhow::anyhow;
-
 mod systemd;
 
 /// Simple systemd service monitor
@@ -42,19 +40,11 @@ async fn main() -> anyhow::Result<()> {
         .with_max_level(args.log_level)
         .init();
 
-    tracing::info!("monitoring services: [{}]", args.services.iter().join(", "));
-
-    let systemd_interface = systemd::ServiceMonitorInterface::new().await?;
-
-    let disjoint_unit_names = systemd_interface
-        .disjoint_from_unit_file_names(&args.services)
-        .await?;
-    if !disjoint_unit_names.is_empty() {
-        Err(anyhow!(
-            "The following services weren't present in the unit files: [{}]",
-            disjoint_unit_names.into_iter().join(", ")
-        ))?;
-    }
+    let systemd_interface = systemd::ServiceMonitorInterface::new(&args.services).await?;
+    tracing::info!(
+        "Monitoring services: [{}]",
+        systemd_interface.monitored_services().join(", ")
+    );
 
     Ok(HttpServer::new(|| App::new().service(root_endpoint))
         .server_hostname("hypha_server")
