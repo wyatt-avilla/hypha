@@ -1,7 +1,7 @@
-use actix_web::{App, HttpServer, Responder, get};
-use api::ServiceStatuses;
+use actix_web::{App, HttpServer, Responder, get, web};
 use clap::Parser;
 use itertools::Itertools;
+use tokio::sync::Mutex as TokioMutex;
 
 mod systemd;
 
@@ -26,11 +26,11 @@ struct Args {
     log_level: tracing::Level,
 }
 
-#[get("/")]
-async fn root_endpoint() -> impl Responder {
-    ServiceStatuses {
-        service_to_alive: [("s1".to_string(), true), ("s2".to_string(), false)].into(),
-    }
+#[get("/api")]
+async fn root_endpoint(
+    data: web::Data<TokioMutex<systemd::ServiceMonitorInterface<'_>>>,
+) -> impl Responder {
+    data.lock().await.get_service_statuses().await
 }
 
 #[actix_web::main]
@@ -46,10 +46,14 @@ async fn main() -> anyhow::Result<()> {
         systemd_interface.monitored_services().join(", ")
     );
 
-    Ok(HttpServer::new(|| App::new().service(root_endpoint))
-        .server_hostname("hypha_server")
-        .bind(("127.0.0.1", args.port))?
-        .workers(args.workers)
-        .run()
-        .await?)
+    let app_data = web::Data::new(TokioMutex::new(systemd_interface));
+
+    Ok(
+        HttpServer::new(move || App::new().app_data(app_data.clone()).service(root_endpoint))
+            .server_hostname("hypha_server")
+            .bind(("127.0.0.1", args.port))?
+            .workers(args.workers)
+            .run()
+            .await?,
+    )
 }

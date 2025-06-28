@@ -90,4 +90,8 @@ impl<'a> ServiceMonitorInterface<'a> {
     pub fn monitored_services(&self) -> impl Iterator<Item = &String> {
         self.monitored_services.iter()
     }
+
+    pub async fn get_service_statuses(&self) -> api::ServiceStatuses {
+        todo!()
+    }
 }
