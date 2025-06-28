@@ -13,13 +13,16 @@ pub enum ServiceMonitorError {
     #[error("Invalid service names [{0}]")]
     InvalidServiceName(String),
 
+    #[error("Couldn't parse '{0}' into a state enum")]
+    StateParseError(String),
+
     #[error("D-Bus error ({0})")]
     ZbusError(#[from] zbus::Error),
 }
 
 pub struct ServiceMonitorInterface<'a> {
     manager: zbus_systemd::systemd1::ManagerProxy<'a>,
-    monitored_services: BTreeSet<String>,
+    monitored_services: Vec<String>,
 }
 
 impl<'a> ServiceMonitorInterface<'a> {
@@ -91,7 +94,27 @@ impl<'a> ServiceMonitorInterface<'a> {
         self.monitored_services.iter()
     }
 
-    pub async fn get_service_statuses(&self) -> api::ServiceStatuses {
-        todo!()
+    pub async fn get_service_statuses(&self) -> Result<api::ServiceStatuses, ServiceMonitorError> {
+        Ok(api::ServiceStatuses {
+            map: self
+                .manager
+                .list_units_by_names(self.monitored_services.clone())
+                .await?
+                .into_iter()
+                .map(|t| -> Result<_, ServiceMonitorError> {
+                    Ok((
+                        t.0,
+                        (
+                            t.2.parse::<api::UnitLoadState>()
+                                .map_err(|_| ServiceMonitorError::StateParseError(t.2))?,
+                            t.3.parse::<api::UnitActiveState>()
+                                .map_err(|_| ServiceMonitorError::StateParseError(t.3))?,
+                            t.4.parse::<api::UnitActiveSubState>()
+                                .map_err(|_| ServiceMonitorError::StateParseError(t.4))?,
+                        ),
+                    ))
+                })
+                .collect::<Result<_, _>>()?,
+        })
     }
 }

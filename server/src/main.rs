@@ -1,4 +1,4 @@
-use actix_web::{App, HttpServer, Responder, get, web};
+use actix_web::{App, HttpResponse, HttpServer, Responder, get, web};
 use clap::Parser;
 use itertools::Itertools;
 use tokio::sync::Mutex as TokioMutex;
@@ -30,7 +30,10 @@ struct Args {
 async fn root_endpoint(
     data: web::Data<TokioMutex<systemd::ServiceMonitorInterface<'_>>>,
 ) -> impl Responder {
-    data.lock().await.get_service_statuses().await
+    match data.lock().await.get_service_statuses().await {
+        Ok(s) => HttpResponse::Ok().json(s),
+        Err(e) => HttpResponse::InternalServerError().body(format!("Error: {e}")),
+    }
 }
 
 #[actix_web::main]
