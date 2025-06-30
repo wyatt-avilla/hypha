@@ -34,16 +34,12 @@ pub fn connect_to(
     sys_loop: EspEventLoop<System>,
     nvs: EspNvsPartition<NvsDefault>,
 ) -> Result<(), WifiError> {
-    log::info!("attempting async init");
-    log::info!("ssid: {ssid}");
-    log::info!("pass: {password}");
     let mut wifi = BlockingWifi::wrap(
         EspWifi::new(modem, sys_loop.clone(), Some(nvs)).map_err(WifiError::Driver)?,
         sys_loop,
     )
     .map_err(WifiError::Driver)?;
 
-    log::info!("SETTING CONFIGUARTION");
     let configuration = Configuration::Client(ClientConfiguration {
         ssid: ssid
             .try_into()
