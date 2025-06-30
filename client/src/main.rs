@@ -20,8 +20,8 @@ async fn main(spawner: Spawner) {
         dotenv!("WIFI_SSID"),
         dotenv!("WIFI_PASSWORD"),
         &mut peripherals.modem,
-        sys_loop,
-        nvs,
+        sys_loop.clone(),
+        nvs.clone(),
     )
     .unwrap();
 
