@@ -3,10 +3,3 @@ members = [ "api","client", "server"]
 resolver = "2"
 
 default-members = []
-
-[profile.dev.package.client]
-debug = true
-opt-level = "z"
-
-[profile.release.package.client]
-opt-level = "s"
