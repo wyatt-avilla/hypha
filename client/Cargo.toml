@@ -21,6 +21,9 @@ critical-section = { version = "1.1", features = ["std"], default-features = fal
 embassy-executor = { version = "0.7", features = ["executor-thread", "arch-std", "task-arena-size-8192"] }
 embassy-time = { version = "0.4.0" }
 esp-idf-hal = "0.45.2"
+dotenvy_macro = "0.15.7"
+thiserror = "2.0.12"
+embedded-svc = "0.28.1"
 
 
 # --- Optional Embassy Integration ---
