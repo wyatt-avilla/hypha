@@ -44,5 +44,10 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           prefix-key: "client-build"
+      - name: Create dummy .env
+        run: |
+          touch .env
+          echo "WIFI_SSID=ssid" >> .env
+          echo "WIFI_PASSWORD=password" >> .env
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
