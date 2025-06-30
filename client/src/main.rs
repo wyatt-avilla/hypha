@@ -16,7 +16,7 @@ async fn main(spawner: Spawner) {
     let sys_loop = EspSystemEventLoop::take().unwrap();
     let nvs = EspDefaultNvsPartition::take().unwrap();
 
-    wifi::connect_to(
+    let wifi = wifi::connect_to(
         dotenv!("WIFI_SSID"),
         dotenv!("WIFI_PASSWORD"),
         &mut peripherals.modem,

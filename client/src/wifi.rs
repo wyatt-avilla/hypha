@@ -27,13 +27,13 @@ pub enum WifiError {
     NetworkInterfaceWait(EspError),
 }
 
-pub fn connect_to(
+pub fn connect_to<'a>(
     ssid: &'static str,
     password: &'static str,
-    modem: &mut Modem,
+    modem: &'a mut Modem,
     sys_loop: EspEventLoop<System>,
     nvs: EspNvsPartition<NvsDefault>,
-) -> Result<(), WifiError> {
+) -> Result<BlockingWifi<EspWifi<'a>>, WifiError> {
     let mut wifi = BlockingWifi::wrap(
         EspWifi::new(modem, sys_loop.clone(), Some(nvs)).map_err(WifiError::Driver)?,
         sys_loop,
@@ -66,5 +66,5 @@ pub fn connect_to(
         .map_err(WifiError::NetworkInterfaceWait)?;
     log::info!("Wifi netif up");
 
-    Ok(())
+    Ok(wifi)
 }
