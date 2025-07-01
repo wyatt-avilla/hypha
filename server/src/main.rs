@@ -1,4 +1,4 @@
-use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, get, web};
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, web};
 use clap::Parser;
 use itertools::Itertools;
 use tokio::sync::Mutex as TokioMutex;
@@ -14,7 +14,7 @@ struct Args {
     pub services: Vec<String>,
 
     /// Port to run the server on
-    #[arg(short, long, default_value_t = 8910)]
+    #[arg(short, long, default_value_t = api::DEFAULT_SERVER_PORT)]
     port: u16,
 
     /// Number of workers for the server
@@ -26,7 +26,6 @@ struct Args {
     log_level: tracing::Level,
 }
 
-#[get("/api")]
 async fn root_endpoint(
     req: HttpRequest,
     data: web::Data<TokioMutex<systemd::ServiceMonitorInterface<'_>>>,
@@ -62,12 +61,14 @@ async fn main() -> anyhow::Result<()> {
 
     let app_data = web::Data::new(TokioMutex::new(systemd_interface));
 
-    Ok(
-        HttpServer::new(move || App::new().app_data(app_data.clone()).service(root_endpoint))
-            .server_hostname("hypha_server")
-            .bind(("0.0.0.0", args.port))?
-            .workers(args.workers)
-            .run()
-            .await?,
-    )
+    Ok(HttpServer::new(move || {
+        App::new()
+            .route(api::SERVER_ENDPOINT, web::get().to(root_endpoint))
+            .app_data(app_data.clone())
+    })
+    .server_hostname("hypha_server")
+    .bind(("0.0.0.0", args.port))?
+    .workers(args.workers)
+    .run()
+    .await?)
 }
