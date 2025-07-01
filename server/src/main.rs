@@ -1,4 +1,4 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, get, web};
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, get, web};
 use clap::Parser;
 use itertools::Itertools;
 use tokio::sync::Mutex as TokioMutex;
@@ -28,8 +28,16 @@ struct Args {
 
 #[get("/api")]
 async fn root_endpoint(
+    req: HttpRequest,
     data: web::Data<TokioMutex<systemd::ServiceMonitorInterface<'_>>>,
 ) -> impl Responder {
+    tracing::info!(
+        "Request from IP: {}",
+        req.connection_info()
+            .realip_remote_addr()
+            .unwrap_or("Unknown ip")
+    );
+
     match data.lock().await.get_service_statuses().await {
         Ok(s) => HttpResponse::Ok().json(s),
         Err(e) => {
