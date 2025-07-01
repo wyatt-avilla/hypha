@@ -6,6 +6,7 @@ use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
     http::client::{Configuration, EspHttpConnection},
     nvs::EspDefaultNvsPartition,
+    timer::EspTaskTimerService,
 };
 
 mod blink;
@@ -21,6 +22,7 @@ async fn main(spawner: Spawner) {
     let mut peripherals = Peripherals::take().unwrap();
     let sys_loop = EspSystemEventLoop::take().unwrap();
     let nvs = EspDefaultNvsPartition::take().unwrap();
+    let timer_service = EspTaskTimerService::new().unwrap();
 
     let _wifi = wifi::connect_to(
         dotenv!("WIFI_SSID"),
@@ -28,22 +30,9 @@ async fn main(spawner: Spawner) {
         &mut peripherals.modem,
         sys_loop.clone(),
         nvs.clone(),
+        timer_service.clone(),
     )
-    .unwrap();
-
-    let mut client = HttpClient::wrap(EspHttpConnection::new(&Configuration::default()).unwrap());
-    log::info!("built client...");
-
-    let statuses = http::query_services(
-        &mut client,
-        format!(
-            "http://{}:{}{}",
-            dotenv!("SERVER_IP"),
-            api::DEFAULT_SERVER_PORT,
-            api::SERVER_ENDPOINT
-        )
-        .as_str(),
-    )
+    .await
     .unwrap();
 
     let mut led = PinDriver::output(peripherals.pins.gpio5).unwrap();

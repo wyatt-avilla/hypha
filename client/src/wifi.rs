@@ -2,7 +2,8 @@ use esp_idf_hal::{modem::Modem, sys::EspError};
 use esp_idf_svc::{
     eventloop::{EspEventLoop, System},
     nvs::{EspNvsPartition, NvsDefault},
-    wifi::{AuthMethod, BlockingWifi, ClientConfiguration, Configuration, EspWifi},
+    timer::{EspTimerService, Task},
+    wifi::{AsyncWifi, AuthMethod, ClientConfiguration, Configuration, EspWifi},
 };
 use thiserror::Error;
 
@@ -27,16 +28,18 @@ pub enum WifiError {
     NetworkInterfaceWait(EspError),
 }
 
-pub fn connect_to<'a>(
+pub async fn connect_to<'a>(
     ssid: &'static str,
     password: &'static str,
     modem: &'a mut Modem,
     sys_loop: EspEventLoop<System>,
     nvs: EspNvsPartition<NvsDefault>,
-) -> Result<BlockingWifi<EspWifi<'a>>, WifiError> {
-    let mut wifi = BlockingWifi::wrap(
+    timer_service: EspTimerService<Task>,
+) -> Result<AsyncWifi<EspWifi<'a>>, WifiError> {
+    let mut wifi = AsyncWifi::wrap(
         EspWifi::new(modem, sys_loop.clone(), Some(nvs)).map_err(WifiError::Driver)?,
         sys_loop,
+        timer_service,
     )
     .map_err(WifiError::Driver)?;
 
@@ -56,13 +59,14 @@ pub fn connect_to<'a>(
     wifi.set_configuration(&configuration)
         .map_err(WifiError::Configuration)?;
 
-    wifi.start().map_err(WifiError::Start)?;
+    wifi.start().await.map_err(WifiError::Start)?;
     log::info!("Wifi started");
 
-    wifi.connect().map_err(WifiError::Connect)?;
+    wifi.connect().await.map_err(WifiError::Connect)?;
     log::info!("Wifi connected");
 
     wifi.wait_netif_up()
+        .await
         .map_err(WifiError::NetworkInterfaceWait)?;
     log::info!("Wifi netif up");
 
