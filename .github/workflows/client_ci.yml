@@ -49,5 +49,6 @@ jobs:
           touch .env
           echo "WIFI_SSID=ssid" >> .env
           echo "WIFI_PASSWORD=password" >> .env
+          echo "SERVER_IP=ip" >> .env
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}

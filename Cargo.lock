@@ -755,6 +755,7 @@ dependencies = [
  "esp-idf-hal",
  "esp-idf-svc",
  "log",
+ "serde_json",
  "thiserror 2.0.12",
 ]
 

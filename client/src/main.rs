@@ -1,9 +1,15 @@
 use dotenvy_macro::dotenv;
 use embassy_executor::Spawner;
+use embedded_svc::http::client::Client as HttpClient;
 use esp_idf_hal::{gpio::PinDriver, peripherals::Peripherals};
-use esp_idf_svc::{eventloop::EspSystemEventLoop, nvs::EspDefaultNvsPartition};
+use esp_idf_svc::{
+    eventloop::EspSystemEventLoop,
+    http::client::{Configuration, EspHttpConnection},
+    nvs::EspDefaultNvsPartition,
+};
 
 mod blink;
+mod http;
 mod wifi;
 
 #[embassy_executor::main]
@@ -16,12 +22,27 @@ async fn main(spawner: Spawner) {
     let sys_loop = EspSystemEventLoop::take().unwrap();
     let nvs = EspDefaultNvsPartition::take().unwrap();
 
-    let wifi = wifi::connect_to(
+    let _wifi = wifi::connect_to(
         dotenv!("WIFI_SSID"),
         dotenv!("WIFI_PASSWORD"),
         &mut peripherals.modem,
         sys_loop.clone(),
         nvs.clone(),
+    )
+    .unwrap();
+
+    let mut client = HttpClient::wrap(EspHttpConnection::new(&Configuration::default()).unwrap());
+    log::info!("built client...");
+
+    let statuses = http::query_services(
+        &mut client,
+        format!(
+            "http://{}:{}{}",
+            dotenv!("SERVER_IP"),
+            api::DEFAULT_SERVER_PORT,
+            api::SERVER_ENDPOINT
+        )
+        .as_str(),
     )
     .unwrap();
 
