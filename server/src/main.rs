@@ -65,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(
         HttpServer::new(move || App::new().app_data(app_data.clone()).service(root_endpoint))
             .server_hostname("hypha_server")
-            .bind(("127.0.0.1", args.port))?
+            .bind(("0.0.0.0", args.port))?
             .workers(args.workers)
             .run()
             .await?,
