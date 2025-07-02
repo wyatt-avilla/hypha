@@ -1,67 +1,23 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use strum_macros::{Display, EnumString};
+
+mod unit;
+
+pub use unit::UnitActiveState;
+pub use unit::UnitActiveSubState;
+pub use unit::UnitLoadState;
 
 pub static DEFAULT_SERVER_PORT: u16 = 8910;
 pub static SERVER_ENDPOINT: &str = "/api";
 
 #[derive(Serialize, Deserialize)]
 pub struct ServiceStatuses {
-    pub map: BTreeMap<String, (UnitLoadState, UnitActiveState, UnitActiveSubState)>,
-}
-
-#[derive(EnumString, Display, Debug, Serialize, Deserialize)]
-#[strum(serialize_all = "kebab-case")]
-pub enum UnitLoadState {
-    Stub,
-    Loaded,
-    NotFound,
-    BadSetting,
-    Error,
-    Merged,
-    Masked,
-}
-
-#[derive(EnumString, Display, Debug, Serialize, Deserialize)]
-#[strum(serialize_all = "kebab-case")]
-pub enum UnitActiveState {
-    Active,
-    Reloading,
-    Inactive,
-    Failed,
-    Activating,
-    Deactivating,
-    Maintenance,
-    Refreshing,
-}
-
-#[derive(EnumString, Display, Debug, Serialize, Deserialize)]
-#[strum(serialize_all = "kebab-case")]
-pub enum UnitActiveSubState {
-    Dead,
-    Condition,
-    StartPre,
-    Start,
-    StartPost,
-    Running,
-    Exited,
-    Reload,
-    ReloadSignal,
-    ReloadNotify,
-    Mounting,
-    Stop,
-    StopWatchdog,
-    StopSigterm,
-    StopSigkill,
-    StopPost,
-    FinalWatchdog,
-    FinalSigterm,
-    FinalSigkill,
-    Failed,
-    DeadBeforeAutoRestart,
-    FailedBeforeAutoRestart,
-    DeadResourcesPinned,
-    AutoRestart,
-    AutoRestartQueued,
-    Cleaning,
+    pub map: BTreeMap<
+        String,
+        (
+            unit::UnitLoadState,
+            unit::UnitActiveState,
+            unit::UnitActiveSubState,
+        ),
+    >,
 }

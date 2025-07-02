@@ -6,6 +6,12 @@ use esp_idf_hal::{
 
 type LedPin = PinDriver<'static, esp_idf_hal::gpio::Gpio5, Output>;
 
+pub enum BlinkCommand {
+    Off,
+    Solid,
+    AlternatingSeconds,
+    SolidThenPulseN(usize),
+}
 pub async fn alternating_sec(led: &mut LedPin) -> Result<(), EspError> {
     led.set_high()?;
     Timer::after_secs(1).await;

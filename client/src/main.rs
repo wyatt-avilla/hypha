@@ -1,17 +1,16 @@
 use dotenvy_macro::dotenv;
 use embassy_executor::Spawner;
-use embedded_svc::http::client::Client as HttpClient;
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use esp_idf_hal::{gpio::PinDriver, peripherals::Peripherals};
 use esp_idf_svc::{
-    eventloop::EspSystemEventLoop,
-    http::client::{Configuration, EspHttpConnection},
-    nvs::EspDefaultNvsPartition,
-    timer::EspTaskTimerService,
+    eventloop::EspSystemEventLoop, nvs::EspDefaultNvsPartition, timer::EspTaskTimerService,
 };
 
 mod blink;
 mod http;
 mod wifi;
+
+pub static BLINK_CHANNEL: Channel<CriticalSectionRawMutex, blink::BlinkCommand, 1> = Channel::new();
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
@@ -34,6 +33,8 @@ async fn main(spawner: Spawner) {
     )
     .await
     .unwrap();
+
+    spawner.spawn(http::task(60)).unwrap();
 
     let mut led = PinDriver::output(peripherals.pins.gpio5).unwrap();
 

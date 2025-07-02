@@ -749,6 +749,7 @@ dependencies = [
  "critical-section",
  "dotenvy_macro",
  "embassy-executor",
+ "embassy-sync 0.7.0",
  "embassy-time",
  "embedded-svc",
  "embuild",
@@ -1092,6 +1093,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "embassy-sync"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cef1a8a1ea892f9b656de0295532ac5d8067e9830d49ec75076291fd6066b136"
+dependencies = [
+ "cfg-if",
+ "critical-section",
+ "embedded-io-async",
+ "futures-sink",
+ "futures-util",
+ "heapless",
+]
+
+[[package]]
 name = "embassy-time"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1318,7 +1333,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "775ce25171dc4f615146a4a27ed3a64c6fd99ced77d7112062f2b19bf933f5db"
 dependencies = [
  "atomic-waker",
- "embassy-sync",
+ "embassy-sync 0.6.2",
  "embedded-can",
  "embedded-hal 0.2.7",
  "embedded-hal 1.0.0",
