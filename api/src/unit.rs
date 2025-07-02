@@ -14,6 +14,7 @@ pub enum UnitLoadState {
 }
 
 impl UnitLoadState {
+    #[must_use]
     pub fn is_loaded(&self) -> bool {
         matches!(self, Self::Loaded)
     }
@@ -34,6 +35,7 @@ pub enum UnitActiveState {
 }
 
 impl UnitActiveState {
+    #[must_use]
     pub fn is_active(&self) -> bool {
         matches!(
             self,
