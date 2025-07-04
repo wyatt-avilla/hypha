@@ -8,7 +8,7 @@ use esp_idf_svc::http::{
 };
 use thiserror::Error;
 
-use crate::blink;
+use crate::blink::{self, BlinkCommand};
 
 #[derive(Error, Debug)]
 pub enum QueryError {
@@ -50,6 +50,17 @@ async fn query_services(url: &str) -> Result<api::ServiceStatuses, QueryError> {
 #[embassy_executor::task]
 pub async fn task(query_interval_seconds: u64) {
     let sender = crate::BLINK_CHANNEL.sender();
+    let mut previously_sent: Option<BlinkCommand> = None;
+
+    let mut send_if_prev_diff = |cmd: BlinkCommand| {
+        if previously_sent
+            .as_ref()
+            .is_none_or(|_prev| !matches!(&cmd, _prev))
+        {
+            sender.try_send(cmd.clone()).ok();
+            previously_sent = Some(cmd);
+        }
+    };
 
     loop {
         let down_services = query_services(
@@ -74,27 +85,23 @@ pub async fn task(query_interval_seconds: u64) {
         match down_services {
             Ok(s) => {
                 if s.is_empty() {
-                    sender.try_send(blink::BlinkCommand::Off).ok()
+                    send_if_prev_diff(blink::BlinkCommand::Off);
                 } else {
                     log::error!("The following units are down {s:#?}");
-                    sender
-                        .try_send(blink::BlinkCommand::SolidThenPulseN(s.len()))
-                        .ok()
+                    send_if_prev_diff(blink::BlinkCommand::SolidThenPulseN(s.len()));
                 }
             }
             Err(e) => match e {
                 QueryError::Parse | QueryError::ClientInit(_) => {
                     log::error!("{e}");
-                    sender.try_send(blink::BlinkCommand::Solid).ok()
+                    send_if_prev_diff(blink::BlinkCommand::Solid);
                 }
                 QueryError::Http(e) => {
                     log::error!("Http request failed ({e})");
-                    sender
-                        .try_send(blink::BlinkCommand::AlternatingSeconds)
-                        .ok()
+                    send_if_prev_diff(blink::BlinkCommand::AlternatingSeconds);
                 }
             },
-        };
+        }
 
         Timer::after_secs(query_interval_seconds).await;
     }
