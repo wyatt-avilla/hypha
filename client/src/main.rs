@@ -34,13 +34,12 @@ async fn main(spawner: Spawner) {
     .await
     .unwrap();
 
+    let led = PinDriver::output(peripherals.pins.gpio5).unwrap();
+
     spawner.spawn(http::task(60)).unwrap();
+    log::info!("spawned http task...");
+    spawner.spawn(blink::task(led)).unwrap();
+    log::info!("spawned blink task...");
 
-    let mut led = PinDriver::output(peripherals.pins.gpio5).unwrap();
-
-    log::info!("entering loop...");
-    loop {
-        let _ = blink::alternating_sec(&mut led).await;
-        let _ = blink::solid_then_pulse_n(&mut led, 5).await;
-    }
+    core::future::pending::<()>().await;
 }

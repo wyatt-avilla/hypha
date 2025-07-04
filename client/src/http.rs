@@ -6,6 +6,7 @@ use esp_idf_svc::http::{
     client::{Configuration, EspHttpConnection},
     Method,
 };
+use std::mem::discriminant;
 use thiserror::Error;
 
 use crate::blink::{self, BlinkCommand};
@@ -50,15 +51,12 @@ async fn query_services(url: &str) -> Result<api::ServiceStatuses, QueryError> {
 #[embassy_executor::task]
 pub async fn task(query_interval_seconds: u64) {
     let sender = crate::BLINK_CHANNEL.sender();
-    let mut previously_sent: Option<BlinkCommand> = None;
+    let mut previously_sent = blink::BlinkCommand::Off;
 
     let mut send_if_prev_diff = |cmd: BlinkCommand| {
-        if previously_sent
-            .as_ref()
-            .is_none_or(|_prev| !matches!(&cmd, _prev))
-        {
+        if discriminant(&previously_sent) != discriminant(&cmd) {
             sender.try_send(cmd.clone()).ok();
-            previously_sent = Some(cmd);
+            previously_sent = cmd;
         }
     };
 
