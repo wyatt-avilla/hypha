@@ -98,7 +98,7 @@ pub async fn task(query_interval_seconds: u64) {
                 }
                 QueryError::Http(e) => {
                     log::error!("Http request failed ({e})");
-                    send_if_prev_diff(blink::BlinkCommand::AlternatingSeconds);
+                    send_if_prev_diff(blink::BlinkCommand::AlternateEveryMilli(1000));
                 }
             },
         }
