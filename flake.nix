@@ -84,19 +84,33 @@
             runHook postInstall
           '';
         };
+
+        nativeRustToolchain = with pkgs; [
+          (rust-bin.stable.latest.default.override {
+            extensions = [
+              "clippy"
+              "rust-src"
+            ];
+          })
+        ];
+
       in
       {
+        packages.server = pkgs.rustPlatform.buildRustPackage {
+          name = "server";
+          pname = "hypha-server";
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+          buildAndTestSubdir = "server";
+          src = ./.;
+
+          nativeBuildInputs = nativeRustToolchain;
+        };
+
         devShells.server = pkgs.mkShell {
           name = "server";
-          nativeBuildInputs = with pkgs; [
-            (rust-bin.stable.latest.default.override {
-              extensions = [
-                "clippy"
-                "rust-src"
-              ];
-            })
-            rust-analyzer
-          ];
+          nativeBuildInputs = nativeRustToolchain ++ [ pkgs.rust-analyzer ];
 
           shellHook = ''
             export CARGO_BUILD_TARGET="x86_64-unknown-linux-gnu"
