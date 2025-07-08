@@ -85,39 +85,18 @@
           '';
         };
 
-        nativeRustToolchain = with pkgs; [
-          (rust-bin.stable.latest.default.override {
-            extensions = [
-              "clippy"
-              "rust-src"
-            ];
-          })
-        ];
-
-      in
-      {
-        packages.server = pkgs.rustPlatform.buildRustPackage {
-          name = "server";
-          pname = "hypha-server";
-          cargoLock = {
-            lockFile = ./Cargo.lock;
-          };
-          buildAndTestSubdir = "server";
-          src = ./.;
-
-          nativeBuildInputs = nativeRustToolchain;
+        serverOutputs = import ./server {
+          inherit
+            self
+            nixpkgs
+            flake-utils
+            rust-overlay
+            system
+            pkgs
+            ;
         };
 
-        devShells.server = pkgs.mkShell {
-          name = "server";
-          nativeBuildInputs = nativeRustToolchain ++ [ pkgs.rust-analyzer ];
-
-          shellHook = ''
-            export CARGO_BUILD_TARGET="x86_64-unknown-linux-gnu"
-          '';
-        };
-
-        devShells.client = pkgs.mkShell {
+        clientDevShell = pkgs.mkShell {
           name = "client";
           nativeBuildInputs = with pkgs; [
             espRustToolchain
@@ -143,6 +122,14 @@
             BINDGEN_EXTRA_CLANG_ARGS="$BINDGEN_EXTRA_CLANG_ARGS -include ${pkgs.glibc_multi.dev}/include/features.h"
           '';
         };
+      in
+      {
+        devShells = {
+          client = clientDevShell;
+          inherit (serverOutputs.devShells) server;
+        };
+
+        inherit (serverOutputs) packages;
       }
     );
 }
