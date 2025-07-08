@@ -45,6 +45,8 @@
         } // optionalAttrs hasEsp32 { client = clientOutputs.devShell; };
 
         inherit (serverOutputs) packages;
+
+        inherit (serverOutputs) nixosModules;
       }
     );
 }
