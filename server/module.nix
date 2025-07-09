@@ -42,11 +42,7 @@ with lib;
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
-        ExecStart =
-          let
-            serverPackage = (pkgs.callPackage ./default.nix { }).packages.server;
-          in
-          "${lib.getExe serverPackage} --port ${toString config.services.hypha-server.port} --workers ${toString config.services.hypha-server.workers} --log-level ${config.services.hypha-server.logLevel} --services ${lib.concatStringsSep " " config.services.hypha-server.queryServices}";
+        ExecStart = "${lib.getExe config.services.hypha-server.package} --port ${toString config.services.hypha-server.port} --workers ${toString config.services.hypha-server.workers} --log-level ${config.services.hypha-server.logLevel} --services ${lib.concatStringsSep " " config.services.hypha-server.queryServices}";
         Restart = "always";
         User = "hypha-server";
         Group = "hypha-server";
