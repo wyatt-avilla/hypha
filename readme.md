@@ -17,6 +17,79 @@ statuses.
 Personally, I'm using it to repurpose a (previously) unused hard drive status
 LED on my [homelab's case](https://www.amazon.com/dp/B0CH3JXKZF).
 
+## Installation
+
+### Server
+
+#### NixOS
+
+The server is exposed as a NixOS service. Add this repo's flake to your inputs,
+and enable/configure the server like so:
+
+<details>
+    <summary>Sample Flake</summary>
+
+```nix
+{
+  description = "Simple example using hypha service";
+
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    hypha.url = "github:wyatt-avilla/hypha";
+  };
+
+  outputs =
+    { nixpkgs, hypha }:
+    {
+      nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          hypha.nixosModules.server
+          {
+            services.hypha-server = {
+              enable = true;
+              port = 8910;
+              workers = 2;
+              logLevel = "INFO";
+              queryServices = [
+                "polkit.service"
+                "NetworkManager.service"
+              ];
+            };
+          }
+        ];
+      };
+    };
+}
+```
+
+</details>
+
+#### Manual
+
+For non-nix systems, compile and add the server binary to your path, and
+optionally create a Systemd service.
+
+<details>
+    <summary>Sample Systemd Unit</summary>
+
+```txt
+[Unit]
+After=network.target
+Description=Hypha server
+
+[Service]
+ExecStart=/usr/bin/hypha-server --port 8910 --workers 1 --log-level INFO --services polkit.service tlp.service
+Group=hypha-server
+Restart=always
+User=hypha-server
+
+[Install]
+WantedBy=multi-user.target
+```
+
+</details>
+
 ## Server
 
 The server is built with [Actix Web](https://actix.rs/) and responds with the
