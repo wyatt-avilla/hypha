@@ -1,7 +1,7 @@
 {
   lib,
   config,
-  pkgs,
+  self,
   ...
 }:
 with lib;
@@ -42,7 +42,7 @@ with lib;
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.hypha-server} --port ${toString config.services.hypha-server.port} --workers ${toString config.services.hypha-server.workers} --log-level ${config.services.hypha-server.logLevel} --services ${lib.concatStringsSep " " config.services.hypha-server.queryServices}";
+        ExecStart = "${lib.getExe self.packages.server} --port ${toString config.services.hypha-server.port} --workers ${toString config.services.hypha-server.workers} --log-level ${config.services.hypha-server.logLevel} --services ${lib.concatStringsSep " " config.services.hypha-server.queryServices}";
         Restart = "always";
         User = "hypha-server";
         Group = "hypha-server";

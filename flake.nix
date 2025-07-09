@@ -21,26 +21,16 @@
         server = import ./server/module.nix;
         default = import ./server/module.nix;
       };
-
-      overlays = {
-        hypha-server = final: prev: {
-          #
-          hypha-server = self.packages.${final.system}.server;
-        };
-      };
     in
     {
-      inherit nixosModules overlays;
+      inherit nixosModules;
     }
     // flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [
-            (import rust-overlay)
-            overlays.hypha-server
-          ];
+          overlays = [ (import rust-overlay) ];
         };
 
         serverOutputs = import ./server {
