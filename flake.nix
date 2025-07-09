@@ -44,17 +44,10 @@
         };
 
         clientOutputs = import ./client { inherit pkgs system esp-dev; };
-
-        optionalAttrs = cond: attrs: if cond then attrs else { };
-
-        hasEsp32 = clientOutputs ? devShell;
       in
       {
-        devShells = {
-          inherit (serverOutputs.devShells) server;
-        } // optionalAttrs hasEsp32 { client = clientOutputs.devShell; };
-
-        inherit (serverOutputs) packages;
+        devShells = clientOutputs.devShells // serverOutputs.devShells;
+        packages = serverOutputs.packages;
       }
     );
 }

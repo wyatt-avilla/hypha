@@ -5,15 +5,14 @@
   ...
 }:
 let
-  rustVersion = "1.86.0.0";
-  toolchainVersion = "1.86.0.0";
+  toolchainVersion = "1.88.0.0";
 
   espRustSource = pkgs.stdenv.mkDerivation {
     name = "esp-rust-source";
 
     src = pkgs.fetchurl {
-      url = "https://github.com/esp-rs/rust-build/releases/download/v${rustVersion}/rust-src-${rustVersion}.tar.xz";
-      sha256 = "sha256-EPoxNiYUk6XZfU886bmLruXMWCiXEf5vJCSY/09lspo=";
+      url = "https://github.com/esp-rs/rust-build/releases/download/v${toolchainVersion}/rust-src-${toolchainVersion}.tar.xz";
+      sha256 = "sha256-m35u//UHO7uFtQ5mn/mVhNuJ1PCsuljgkD3Rmv3uuaE=";
     };
 
     buildInputs = [ ];
@@ -35,12 +34,31 @@ let
     '';
   };
 
+  systemMap = {
+    x86_64-linux = {
+      systemSlug = "x86_64-unknown-linux-gnu";
+      hash = "sha256-dFNJFHSl9yiyRIFlHUPLzq+S9438q+fLiCxr8h/uBQU=";
+    };
+    aarch64-linux = {
+      systemSlug = "aarch64-unknown-linux-gnu";
+      hash = "sha256-gXs4aujsORQM7pH8uVddhtoQq0Qq0avsJpUr6BISxV4=";
+    };
+    x86_64-darwin = {
+      systemSlug = "x86_64-apple-darwin";
+      hash = "sha256-Y3X1Th7GUfxK87MeXSz4vkfNaam5Y2msXk2IxOD05Bg=";
+    };
+    aarch64-darwin = {
+      systemSlug = "aarch64-apple-darwin";
+      hash = "sha256-kuxLe/Y4HRNY1hwTcywMfEeIfhh0suJKnMe9ArFn2zo=";
+    };
+  };
+
   espRustToolchain = pkgs.stdenv.mkDerivation {
     name = "esp-rust-toolchain";
 
     src = pkgs.fetchurl {
-      url = "https://github.com/esp-rs/rust-build/releases/download/v${toolchainVersion}/rust-${toolchainVersion}-x86_64-unknown-linux-gnu.tar.xz";
-      sha256 = "sha256-CqqIgIvYfI10aXTRpS3TnyaMCpsRtdCaMnW3r+qN1V0=";
+      url = "https://github.com/esp-rs/rust-build/releases/download/v${toolchainVersion}/rust-${toolchainVersion}-${systemMap.${system}.systemSlug}.tar.xz";
+      sha256 = systemMap.${system}.hash;
     };
 
     buildInputs = with pkgs; [
@@ -67,8 +85,9 @@ let
       runHook postInstall
     '';
   };
-
-  clientDevShell = pkgs.mkShell {
+in
+{
+  devShells.client = pkgs.mkShell {
     name = "client";
     nativeBuildInputs = with pkgs; [
       espRustToolchain
@@ -94,5 +113,4 @@ let
       BINDGEN_EXTRA_CLANG_ARGS="$BINDGEN_EXTRA_CLANG_ARGS -include ${pkgs.glibc_multi.dev}/include/features.h"
     '';
   };
-in
-if system == "x86_64-linux" then { devShell = clientDevShell; } else { }
+}
