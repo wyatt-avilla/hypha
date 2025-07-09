@@ -1,9 +1,13 @@
+{ flake }:
 {
   lib,
   config,
-  self,
+  pkgs,
   ...
 }:
+let
+  serverBin = lib.getExe flake.packages.${pkgs.system}.server;
+in
 with lib;
 {
   options.services.hypha-server = {
@@ -42,7 +46,7 @@ with lib;
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
-        ExecStart = "${lib.getExe self.packages.server} --port ${toString config.services.hypha-server.port} --workers ${toString config.services.hypha-server.workers} --log-level ${config.services.hypha-server.logLevel} --services ${lib.concatStringsSep " " config.services.hypha-server.queryServices}";
+        ExecStart = "${serverBin} --port ${toString config.services.hypha-server.port} --workers ${toString config.services.hypha-server.workers} --log-level ${config.services.hypha-server.logLevel} --services ${lib.concatStringsSep " " config.services.hypha-server.queryServices}";
         Restart = "always";
         User = "hypha-server";
         Group = "hypha-server";

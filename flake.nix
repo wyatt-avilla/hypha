@@ -18,8 +18,7 @@
     }:
     let
       nixosModules = {
-        server = import ./server/module.nix;
-        default = import ./server/module.nix;
+        server = import ./server/module.nix { flake = self; };
       };
     in
     {
