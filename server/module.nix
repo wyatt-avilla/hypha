@@ -46,7 +46,13 @@ with lib;
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
-        ExecStart = "${serverBin} --port ${toString config.services.hypha-server.port} --workers ${toString config.services.hypha-server.workers} --log-level ${config.services.hypha-server.logLevel} --services ${lib.concatStringsSep " " config.services.hypha-server.queryServices}";
+        ExecStart = lib.concatStringsSep " " [
+          "${serverBin}"
+          "--port ${toString config.services.hypha-server.port}"
+          "--workers ${toString config.services.hypha-server.workers}"
+          "--log-level ${config.services.hypha-server.logLevel}"
+          "--services ${lib.concatStringsSep " " config.services.hypha-server.queryServices}"
+        ];
         Restart = "always";
         User = "hypha-server";
         Group = "hypha-server";
