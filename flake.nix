@@ -16,7 +16,16 @@
       esp-dev,
       rust-overlay,
     }:
-    flake-utils.lib.eachDefaultSystem (
+    let
+      nixosModules = {
+        server = import ./server/module.nix;
+        default = import ./server/module.nix;
+      };
+    in
+    {
+      inherit nixosModules;
+    }
+    // flake-utils.lib.eachDefaultSystem (
       system:
       let
         overlays = [ (import rust-overlay) ];
@@ -45,8 +54,6 @@
         } // optionalAttrs hasEsp32 { client = clientOutputs.devShell; };
 
         inherit (serverOutputs) packages;
-
-        inherit (serverOutputs) nixosModules;
       }
     );
 }
