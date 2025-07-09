@@ -15,15 +15,20 @@ in
     nativeBuildInputs = nativeRustToolchain ++ [ pkgs.rust-analyzer ];
   };
 
-  packages.server = pkgs.rustPlatform.buildRustPackage {
-    name = "server";
-    pname = "hypha-server";
-    cargoLock = {
-      lockFile = ../Cargo.lock;
-    };
-    buildAndTestSubdir = "server";
-    src = ../.;
+  packages.server =
+    let
+      binName = "hypha-server";
+    in
+    pkgs.rustPlatform.buildRustPackage {
+      name = "server";
+      pname = binName;
+      cargoLock = {
+        lockFile = ../Cargo.lock;
+      };
+      buildAndTestSubdir = "server";
+      src = ../.;
 
-    nativeBuildInputs = nativeRustToolchain;
-  };
+      nativeBuildInputs = nativeRustToolchain;
+      meta.mainProgram = binName;
+    };
 }
