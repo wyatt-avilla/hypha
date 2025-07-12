@@ -47,7 +47,7 @@
       in
       {
         devShells = clientOutputs.devShells // serverOutputs.devShells;
-        packages = serverOutputs.packages;
+        packages = clientOutputs.packages // serverOutputs.packages;
       }
     );
 }

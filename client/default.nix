@@ -15,8 +15,6 @@ let
       sha256 = "sha256-m35u//UHO7uFtQ5mn/mVhNuJ1PCsuljgkD3Rmv3uuaE=";
     };
 
-    buildInputs = [ ];
-
     unpackPhase = ''
       mkdir -p $out
       tar -xf $src -C $out --strip-components=1
@@ -85,10 +83,33 @@ let
       runHook postInstall
     '';
   };
-in
-{
-  devShells.client = pkgs.mkShell {
-    name = "client";
+
+  combinedVendoredCargoDeps = pkgs.stdenv.mkDerivation {
+    name = "combined-vendored-cargo-deps";
+    buildInputs = with pkgs; [ rsync ];
+
+    unpackPhase = ''
+      export src=""
+    '';
+
+    stdDeps = pkgs.rustPlatform.fetchCargoVendor {
+      src = "${espRustSource}/rust-src/lib/rustlib/src/rust/library";
+      hash = "sha256-cgbLavzIOXFABPbpqaS0T6n6xQjb+icRhmJ5R/KvPsU=";
+    };
+
+    selfDeps = pkgs.rustPlatform.fetchCargoVendor {
+      src = ../.;
+      hash = "sha256-Wwot0Lm7Tt1ZjORnS0Ek6yQN0tI9ACOKw1DhKKmcvQY=";
+    };
+
+    buildPhase = ''
+      mkdir -p $out
+      rsync -av "$stdDeps/" $out/
+      rsync -av "$selfDeps/" $out/
+    '';
+  };
+
+  buildConfig = {
     nativeBuildInputs = with pkgs; [
       espRustToolchain
       espflash
@@ -107,10 +128,60 @@ in
       glibc_multi.dev
     ];
 
+    target = "xtensa-esp32-espidf";
+
+    bindgenExtraClangArgs = [ "-include ${pkgs.glibc_multi.dev}/include/features.h" ];
+  };
+in
+{
+  devShells.client = pkgs.mkShell {
+    name = "client";
+
+    inherit (buildConfig) nativeBuildInputs;
+    inherit (buildConfig) buildInputs;
+
     shellHook = ''
-      export CARGO_BUILD_TARGET="xtensa-esp32-espidf"
+      export CARGO_BUILD_TARGET="${buildConfig.target}"
       export PATH="${espRustToolchain}/bin:$PATH"
-      BINDGEN_EXTRA_CLANG_ARGS="$BINDGEN_EXTRA_CLANG_ARGS -include ${pkgs.glibc_multi.dev}/include/features.h"
+      BINDGEN_EXTRA_CLANG_ARGS="$BINDGEN_EXTRA_CLANG_ARGS ${pkgs.lib.concatStringsSep " " buildConfig.bindgenExtraClangArgs}"
     '';
   };
+
+  packages.client =
+    let
+      packageName = "client";
+    in
+    pkgs.rustPlatform.buildRustPackage {
+      name = packageName;
+      pname = "hypha";
+      buildAndTestSubdir = packageName;
+      src = ../.;
+
+      cargoDeps = combinedVendoredCargoDeps;
+
+      inherit (buildConfig) nativeBuildInputs;
+      inherit (buildConfig) buildInputs;
+
+      configurePhase = ''
+        BINDGEN_EXTRA_CLANG_ARGS="$BINDGEN_EXTRA_CLANG_ARGS ${pkgs.lib.concatStringsSep " " buildConfig.bindgenExtraClangArgs}"
+
+        touch .env
+        echo "WIFI_SSID=ssid" >> .env
+        echo "WIFI_PASSWORD=password" >> .env
+        echo "SERVER_IP=ip" >> .env
+      '';
+
+      buildPhase = ''
+        cargo build -j $(nproc) -p ${packageName} --offline --release --target=${buildConfig.target}
+      '';
+
+      installPhase = ''
+        mkdir -p $out
+        cp target/${buildConfig.target}/release/hypha-client $out
+      '';
+
+      fixupPhase = ''
+        echo Skipping fixup phase...
+      '';
+    };
 }
