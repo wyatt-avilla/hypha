@@ -43,11 +43,19 @@
             ;
         };
 
-        clientOutputs = import ./client { inherit pkgs system esp-dev; };
+        clientOutputs = import ./client {
+          inherit
+            self
+            pkgs
+            system
+            esp-dev
+            ;
+        };
       in
       {
         devShells = clientOutputs.devShells // serverOutputs.devShells;
         packages = clientOutputs.packages // serverOutputs.packages;
+        inherit (clientOutputs) apps;
       }
     );
 }

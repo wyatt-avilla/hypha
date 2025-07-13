@@ -90,6 +90,23 @@ WantedBy=multi-user.target
 
 </details>
 
+### Client
+
+#### Nix Compatible Systems
+
+To flash the ESP32 firmware on systems with Nix, plug in the ESP32 and run the
+following command:
+
+```sh
+nix run github:wyatt-avilla/hypha#client
+```
+
+#### Manual
+
+To manually flash the firmware, use [`espup`](https://github.com/esp-rs/espup)
+to install the custom Espressif Rust toolchain. Then, compile the client
+package, and flash with [`espflash`](https://github.com/esp-rs/espflash).
+
 ## Server
 
 The server is built with [Actix Web](https://actix.rs/) and responds with the

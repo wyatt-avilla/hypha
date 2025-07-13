@@ -2,6 +2,7 @@
   pkgs,
   system,
   esp-dev,
+  self,
   ...
 }:
 let
@@ -184,4 +185,14 @@ in
         echo Skipping fixup phase...
       '';
     };
+
+  apps.client = {
+    type = "app";
+    meta.description = "flash firmware";
+    program = toString (
+      pkgs.writeShellScript "flash-firmware" ''
+        exec ${pkgs.lib.getExe pkgs.espflash} flash ${self.packages.${system}.client}/hypha-client
+      ''
+    );
+  };
 }
