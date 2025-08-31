@@ -17,11 +17,12 @@ in
 
   packages.server =
     let
-      binName = "hypha-server";
+      cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
     in
     pkgs.rustPlatform.buildRustPackage {
-      name = "server";
-      pname = binName;
+      pname = cargoToml.package.name;
+      inherit (cargoToml.package) version;
+
       cargoLock = {
         lockFile = ../Cargo.lock;
       };
@@ -29,6 +30,6 @@ in
       src = ../.;
 
       nativeBuildInputs = nativeRustToolchain;
-      meta.mainProgram = binName;
+      meta.mainProgram = cargoToml.bin.name;
     };
 }

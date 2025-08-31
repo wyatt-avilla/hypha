@@ -150,12 +150,13 @@ in
 
   packages.client =
     let
-      packageName = "client";
+      cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
     in
     pkgs.rustPlatform.buildRustPackage {
-      name = packageName;
-      pname = "hypha";
-      buildAndTestSubdir = packageName;
+      pname = cargoToml.package.name;
+      inherit (cargoToml.package) version;
+
+      buildAndTestSubdir = "client";
       src = ../.;
 
       cargoDeps = combinedVendoredCargoDeps;
@@ -173,7 +174,7 @@ in
       '';
 
       buildPhase = ''
-        cargo build -j $(nproc) -p ${packageName} --offline --release --target=${buildConfig.target}
+        cargo build -j $(nproc) -p ${cargoToml.package.name} --offline --release --target=${buildConfig.target}
       '';
 
       installPhase = ''
